@@ -1,0 +1,26 @@
+{% extends "base_signed_in.html" %}
+{% block title %}@{{ user_details['username'] }}{% endblock %}
+{% block heading %}{{ user_details['display_name'] }} <span class="text-muted">{{ '(you)' if is_current_user else '' }} &bullet; @{{ user_details['username'] }}</span>{% endblock %}
+{% block content %}
+    {% if not is_current_user %}
+        <form method="POST">
+            {% if current_user_follows_user %}
+                <button type="submit" class="btn btn-pink mb-1" formaction="/users/{{ user_details['id'] }}/unfollow">Unfollow</button>
+            {% else %}
+                <button type="submit" class="btn btn-primary mb-1" formaction="/users/{{ user_details['id'] }}/follow">Follow</button>
+            {% endif %}
+        </form>
+    {% endif %}
+    <hr>
+    <h3>Recent ratings</h3>
+    {% for rating in user_ratings %}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title"><a href="/books/{{ rating['book_id'] }}">{{ rating['title'] }}</a></h5>
+                <h6 class="card-subtitle mb-2">{{ rating['author'] }}</h6>
+                {{ 'You' if is_current_user else user_details['display_name'] }} rated it <strong class="text-pink">{{ rating['score'] }} star(s)</strong>.
+                {{ 'Your' if is_current_user else 'Their' }} review: <em>{{ rating['review'] }}</em>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}
