@@ -18,8 +18,11 @@ def get_book_rating_for_user(book_id, user_id):
     """
     with get_db_connection() as connection:
         with connection.cursor() as cursor:
-            # Temporary code
-            rating = {'score': 5, 'review': 'Banging'}
+            cursor.execute("""SELECT r.score, r.review
+                                FROM book_ratings AS r
+                               WHERE r.user_id = %s
+                                 AND r.book_id = %s""", [user_id, book_id])
+            rating = cursor.fetchone()
             return rating
 
 

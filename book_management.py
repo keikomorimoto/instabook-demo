@@ -56,11 +56,16 @@ def search_books(title):
     """
     with get_db_connection() as connection:
         with connection.cursor(dictionary=True) as cursor:
-            # Temporary code
-            books = [
-                {'id': 1, 'title': 'Some Book',       'author': 'Some Author',       'score': 5},
-                {'id': 2, 'title': 'Some Other Book', 'author': 'Some Other Author', 'score': 4},
-            ]
+            cursor.execute("""SELECT b.id,
+                                     b.title,
+                                     b.author,
+                                     ROUND(AVG(r.score), 1) AS score
+                                FROM books AS b
+                                JOIN book_ratings AS r
+                                  ON b.id = r.book_id
+                               WHERE b.title LIKE CONCAT('%', %s, '%')
+                            GROUP BY r.book_id;""", [title])
+            books = cursor.fetchall()
             return books
 
 
@@ -79,6 +84,14 @@ def get_book_details(book_id):
     """
     with get_db_connection() as connection:
         with connection.cursor(dictionary=True) as cursor:
-            # Temporary code
-            book = {'id': 1, 'title': 'Some Book', 'author': 'Some Author', 'score': 5}
+            cursor.execute("""SELECT b.id,
+                                     b.title,
+                                     b.author,
+                                     ROUND(AVG(r.score), 1) AS score
+                                FROM books AS b
+                                JOIN book_ratings AS r
+                                  ON b.id = r.book_id
+                               WHERE b.id = %s
+                            GROUP BY r.book_id""", [book_id])
+            book = cursor.fetchone()
             return book

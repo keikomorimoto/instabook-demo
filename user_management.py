@@ -15,10 +15,12 @@ def add_user(username, display_name, pin):
     :type pin: str
     :rtype: None
     """
-    with get_db_connection() as connection:
+    with get_db_connection() as connection:  # updated during the review session
         with connection.cursor(dictionary=True) as cursor:
-            # Temporary code
-            pass
+            cursor.execute(f"""INSERT
+                                INTO users (username, display_name, pin)
+                                VALUES (%s, %s, %s)""", [username, display_name, pin])
+            connection.commit()
 
 
 def username_available(username):
@@ -54,16 +56,14 @@ def get_user_with_credentials(username, pin):
     """
     with get_db_connection() as connection:
         with connection.cursor(dictionary=True) as cursor:
-            cursor.execute("""SELECT u.id
-                              FROM users AS u
-                              WHERE u.username = %s
-                              AND u.pin = %s""", [username, pin])
-            user = cursor.fetchone()
-            if user is not None:
-                return user['id']
+            cursor.execute("""SELECT *
+                              FROM users
+                              WHERE username = %s""", [username])  # don't use {}. Sql injection attack
+            user = cursor.fetchone()  # use fetchone because never two users with the same username.
+            return True if user is None else False
 
 
-def search_users(name):
+def search_users(name): # updated during the review session
     """
     Finds all users whose username or display name is like a particular name.
 
@@ -78,11 +78,14 @@ def search_users(name):
     """
     with get_db_connection() as connection:
         with connection.cursor(dictionary=True) as cursor:
-            # Temporary code
-            users = [
-                {'id': 1, 'username': 'somebody',     'display_name': 'Some Body',     'is_admin': True},
-                {'id': 2, 'username': 'somebodyelse', 'display_name': 'Somebody Else', 'is_admin': False},
-            ]
+            cursor.execute("""SELECT u.id,
+                                     u.username,
+                                     u.display_name,
+                                     u.is_admin
+                                FROM users AS u
+                               WHERE u.username LIKE CONCAT('%', %s, '%')
+                                  OR u.display_name LIKE CONCAT('%', %s, '%')""", [name, name])
+            users = cursor.fetchall()
             return users
 
 
@@ -102,7 +105,13 @@ def get_user_details(user_id):
     with get_db_connection() as connection:
         with connection.cursor(dictionary=True) as cursor:
             # Temporary code
-            user = {'id': user_id, 'username': 'somebody', 'display_name': 'Some Body', 'is_admin': True}
+            cursor.execute("""SELECT u.id,
+                                     u.username,
+                                     u.display_name,
+                                     u.is_admin
+                                     FROM users AS u
+                                     WHERE u.id = %s""", [user_id])
+            user = cursor.fetchone()
             return user
 
 
